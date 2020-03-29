@@ -1,0 +1,68 @@
+---
+# tasks file for nexus
+- name: install required utilities.
+  yum:
+    name: wget
+    state: installed
+- name: Install OpenJDK
+  yum:
+    name: java-1.8.0-openjdk.x86_64
+    state: installed
+- name: Create a directory named app
+  file:
+    path: /app
+    state: directory
+
+- name: Download the latest nexus
+  get_url:
+    url: https://download.sonatype.com/nexus/3/latest-unix.tar.gz
+    dest: /app/nexus.tar.gz
+  
+- name: Download the latest nexus
+  get_url:
+    url: https://download.sonatype.com/nexus/3/latest-unix.tar.gz
+    dest: /app/nexus.tar.gz
+
+- name: Untar the downloaded file
+  unarchive:
+    src: /app/nexus.tar.gz
+    dest: /app
+    remote_src: yes
+
+- name: remove tar file
+  shell: rm -rf /app/*.tar.gz
+
+- name: Rename the file to nexus.
+  shell: mv /app/nexus-3* /app/nexus
+
+- name: create a new user named nexus
+  user:
+    name: nexus
+    comment: Nexus user
+
+- name: Change the ownership of nexus files and nexus data directory to nexus user.
+  file:
+    path: "{{ item }}"
+    owner: nexus
+  loop:
+    - /app/nexus
+    - /app/sonatype-work
+
+- name: Open /app/nexus/bin/nexus.rc file
+  lineinfile:
+    path: /app/nexus/bin/nexus.rc
+    regexp: '^#run_as_user="nexus"'
+    line: 'run_as_user="nexus"'
+
+- name: Create a nexus systemd unit file.
+  copy:
+    src: nexus.service
+    dest: /etc/systemd/system/nexus.service  
+
+- name: add nexus service to boot
+  shell: chkconfig nexus on
+  
+- name: start the Nexus service
+  service:
+    name: nexus
+    state: started

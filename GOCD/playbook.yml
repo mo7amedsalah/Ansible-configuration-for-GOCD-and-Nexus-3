@@ -1,0 +1,10 @@
+---
+- hosts: web
+  user: ec2-user
+  become: true
+  roles:
+    - role: goserver
+    - role: goagent
+
+ 
+
